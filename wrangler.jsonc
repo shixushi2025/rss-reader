@@ -1,0 +1,35 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "rss-reader",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-01-11",
+
+  // Static UI served from this directory
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+
+  // Create a D1 database, then paste its id/name here (see README)
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "rss_reader",
+      "database_id": "8a560150-8145-4ad8-9229-7c2cc0272838"
+    }
+  ],
+
+  // Refresh a small batch periodically (adjust as you scale)
+  "triggers": {
+    "crons": ["*/10 * * * *"]
+  },
+
+  "vars": {
+    // How many feeds to refresh per cron tick
+    "REFRESH_BATCH": "10",
+    // Minutes until a feed is eligible for refresh again
+    "REFRESH_INTERVAL_MIN": "30",
+    // Keep only the newest N items per feed
+    "MAX_ITEMS_PER_FEED": "500"
+  }
+}

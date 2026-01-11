@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RSS Reader (Cloudflare)</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">RSS Reader</div>
+      <div class="actions">
+        <button id="btn-refresh" class="btn">Refresh batch</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="panel feeds">
+        <div class="panel-header">
+          <div class="panel-title">Feeds</div>
+        </div>
+
+        <form id="add-feed-form" class="add-feed">
+          <input id="feed-url" type="url" placeholder="https://example.com/rss.xml" required />
+          <button class="btn primary" type="submit">Add</button>
+        </form>
+
+        <div class="feed-tools">
+          <label class="checkbox">
+            <input id="unread-only" type="checkbox" />
+            <span>Unread only</span>
+          </label>
+        </div>
+
+        <ul id="feed-list" class="list"></ul>
+      </section>
+
+      <section class="panel items">
+        <div class="panel-header">
+          <div class="panel-title" id="items-title">Items</div>
+          <div class="panel-actions">
+            <button id="btn-mark-all-read" class="btn">Mark all read</button>
+          </div>
+        </div>
+
+        <div id="status" class="status"></div>
+        <ul id="item-list" class="list items-list"></ul>
+
+        <div class="pager">
+          <button id="btn-more" class="btn">Load more</button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>RSS-only MVP. Deployed as a Worker with static assets + D1.</span>
+    </footer>
+  </div>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

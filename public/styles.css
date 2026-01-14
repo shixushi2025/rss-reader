@@ -62,13 +62,7 @@ body {
 }
 
 .panel.feeds {
-  position: sticky;
-  top: 72px;
-  align-self: start;
-}
-
-.panel.feeds .list {
-  overflow: visible;
+  align-self: stretch;
 }
 
 .panel-header {
@@ -225,5 +219,30 @@ body.feeds-open {
   body.feeds-open .feeds-backdrop {
     opacity: 1;
     pointer-events: auto;
+  }
+}
+
+@media (min-width: 981px) {
+  body {
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .app {
+    height: 100vh;
+  }
+
+  .main {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .panel {
+    min-height: 0;
+  }
+
+  .panel .list {
+    flex: 1;
+    overflow: auto;
   }
 }

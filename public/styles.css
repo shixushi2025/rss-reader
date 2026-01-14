@@ -65,7 +65,10 @@ body {
   position: sticky;
   top: 72px;
   align-self: start;
-  max-height: calc(100vh - 96px);
+}
+
+.panel.feeds .list {
+  overflow: visible;
 }
 
 .panel-header {

@@ -11,6 +11,7 @@
     <header class="topbar">
       <div class="brand">RSS Reader</div>
       <div class="actions">
+        <button id="btn-toggle-feeds" class="btn">Feeds</button>
         <button id="btn-refresh" class="btn">Refresh batch</button>
       </div>
     </header>
@@ -19,6 +20,9 @@
       <section class="panel feeds">
         <div class="panel-header">
           <div class="panel-title">Feeds</div>
+          <div class="panel-actions">
+            <button id="btn-close-feeds" class="btn">Close</button>
+          </div>
         </div>
 
         <form id="add-feed-form" class="add-feed">
@@ -52,6 +56,8 @@
         </div>
       </section>
     </main>
+
+    <div id="feeds-backdrop" class="feeds-backdrop" aria-hidden="true"></div>
 
     <footer class="footer">
       <span>RSS-only MVP. Deployed as a Worker with static assets + D1.</span>

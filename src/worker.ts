@@ -12,6 +12,7 @@ export interface Env {
 type FeedRow = {
   id: number;
   url: string;
+  access_key: string | null;
   title: string | null;
   site_url: string | null;
   etag: string | null;
@@ -63,12 +64,24 @@ function intEnv(env: Env, key: keyof Env, fallback: number) {
   return Number.isFinite(n) ? n : fallback;
 }
 
-function normalizeUrl(u: string) {
-  let s = u.trim();
+function extractAccessKey(url: URL) {
+  let accessKey: string | null = null;
+  for (const [key, value] of url.searchParams.entries()) {
+    if (/access_?key/i.test(key)) {
+      accessKey = value;
+      url.searchParams.delete(key);
+    }
+  }
+  return accessKey;
+}
+
+function normalizeFeedInput(input: string): { url: string; accessKey: string | null } {
+  let s = input.trim();
   if (!/^https?:\/\//i.test(s)) s = "https://" + s;
   const url = new URL(s);
   url.hash = "";
-  return url.toString();
+  const accessKey = extractAccessKey(url);
+  return { url: url.toString(), accessKey };
 }
 
 function requireAdmin(request: Request, env: Env) {
@@ -202,6 +215,15 @@ function parseFeedDocument(doc: any, feedUrl: string): { title?: string; siteUrl
   return { items: [] };
 }
 
+function buildFeedFetchUrl(feed: FeedRow) {
+  if (!feed.access_key) return feed.url;
+  const url = new URL(feed.url);
+  if (![...url.searchParams.keys()].some((key) => /access_?key/i.test(key))) {
+    url.searchParams.set("access_key", feed.access_key);
+  }
+  return url.toString();
+}
+
 async function fetchAndParseFeed(feed: FeedRow): Promise<{
   status: "not_modified" | "ok";
   title?: string;
@@ -222,7 +244,7 @@ async function fetchAndParseFeed(feed: FeedRow): Promise<{
     if (feed.etag) headers.set("if-none-match", feed.etag);
     if (feed.last_modified) headers.set("if-modified-since", feed.last_modified);
 
-    const res = await fetch(feed.url, {
+    const res = await fetch(buildFeedFetchUrl(feed), {
       headers,
       redirect: "follow",
       signal: controller.signal,
@@ -350,7 +372,7 @@ async function refreshOneFeed(env: Env, feed: FeedRow): Promise<{ inserted: numb
 async function getDueFeeds(env: Env, batch: number): Promise<FeedRow[]> {
   const now = nowMs();
   const { results } = await env.DB.prepare(
-    `SELECT id, url, title, site_url, etag, last_modified, last_fetch_at, next_fetch_at, enabled
+    `SELECT id, url, access_key, title, site_url, etag, last_modified, last_fetch_at, next_fetch_at, enabled
        FROM feeds
       WHERE enabled = 1
         AND (next_fetch_at IS NULL OR next_fetch_at <= ?)
@@ -396,17 +418,17 @@ async function listFeeds(env: Env) {
 
 async function addFeed(env: Env, url: string) {
   const now = nowMs();
-  const normalized = normalizeUrl(url);
+  const { url: normalized, accessKey } = normalizeFeedInput(url);
 
   // Insert first; then validate via refresh (so UI can show it immediately).
   const r = await env.DB.prepare(
-    `INSERT INTO feeds (url, created_at, enabled, next_fetch_at)
-     VALUES (?, ?, 1, ?)
-     ON CONFLICT(url) DO UPDATE SET enabled = 1`
-  ).bind(normalized, now, 0).run();
+    `INSERT INTO feeds (url, access_key, created_at, enabled, next_fetch_at)
+     VALUES (?, ?, ?, 1, ?)
+     ON CONFLICT(url) DO UPDATE SET enabled = 1, access_key = COALESCE(excluded.access_key, access_key)`
+  ).bind(normalized, accessKey, now, 0).run();
 
   // Determine id of inserted/updated row:
-  const { results } = await env.DB.prepare(`SELECT id, url, title, site_url, etag, last_modified, last_fetch_at, next_fetch_at, enabled FROM feeds WHERE url = ?`)
+  const { results } = await env.DB.prepare(`SELECT id, url, access_key, title, site_url, etag, last_modified, last_fetch_at, next_fetch_at, enabled FROM feeds WHERE url = ?`)
     .bind(normalized)
     .all<FeedRow>();
 
@@ -563,7 +585,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     const id = Number(parts[2]);
     if (!Number.isFinite(id) || id <= 0) return badRequest("Invalid feed id");
     const { results } = await env.DB.prepare(
-      `SELECT id, url, title, site_url, etag, last_modified, last_fetch_at, next_fetch_at, enabled
+      `SELECT id, url, access_key, title, site_url, etag, last_modified, last_fetch_at, next_fetch_at, enabled
          FROM feeds
         WHERE id = ?`
     ).bind(id).all<FeedRow>();

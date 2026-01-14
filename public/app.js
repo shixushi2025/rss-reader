@@ -6,6 +6,9 @@ const els = {
   addFeedForm: document.getElementById('add-feed-form'),
   feedUrl: document.getElementById('feed-url'),
   btnRefresh: document.getElementById('btn-refresh'),
+  btnToggleFeeds: document.getElementById('btn-toggle-feeds'),
+  btnCloseFeeds: document.getElementById('btn-close-feeds'),
+  feedsBackdrop: document.getElementById('feeds-backdrop'),
   unreadOnly: document.getElementById('unread-only'),
   btnMore: document.getElementById('btn-more'),
   btnMarkAllRead: document.getElementById('btn-mark-all-read'),
@@ -23,6 +26,34 @@ function fmtTime(ts) {
   if (!ts) return '';
   const d = new Date(ts);
   return d.toLocaleString();
+}
+
+function isMobileLayout() {
+  return window.matchMedia('(max-width: 980px)').matches;
+}
+
+function openFeeds() {
+  document.body.classList.add('feeds-open');
+}
+
+function closeFeeds() {
+  document.body.classList.remove('feeds-open');
+}
+
+function maskSensitiveUrl(url) {
+  try {
+    const parsed = new URL(url);
+    const params = parsed.searchParams;
+    for (const [key] of params.entries()) {
+      if (/access_?key/i.test(key)) {
+        params.set(key, '••••');
+      }
+    }
+    parsed.search = params.toString() ? `?${params.toString()}` : '';
+    return parsed.toString();
+  } catch {
+    return url.replace(/(access_?key=)[^&]+/gi, '$1••••');
+  }
 }
 
 function setStatus(msg) {
@@ -61,6 +92,7 @@ function renderFeeds() {
     els.itemList.innerHTML = '';
     loadItems(true);
     renderFeeds();
+    if (isMobileLayout()) closeFeeds();
   });
 
   els.feedList.innerHTML = '';
@@ -71,11 +103,12 @@ function renderFeeds() {
     li.className = state.selectedFeedId === f.id ? 'feed-selected' : '';
     const title = f.title || '(untitled)';
     const last = f.last_fetch_at ? `Last: ${fmtTime(f.last_fetch_at)}` : 'Never fetched';
+    const displayUrl = maskSensitiveUrl(f.url);
     li.innerHTML = `
       <div class="feed-item">
         <div class="feed-meta">
           <div class="feed-title" title="${title}">${title}</div>
-          <div class="feed-url" title="${f.url}">${f.url}</div>
+          <div class="feed-url" title="${displayUrl}">${displayUrl}</div>
           <div class="feed-badge">${last}</div>
         </div>
         <div class="feed-actions">
@@ -92,6 +125,7 @@ function renderFeeds() {
       els.itemList.innerHTML = '';
       loadItems(true);
       renderFeeds();
+      if (isMobileLayout()) closeFeeds();
     });
 
     li.querySelector('[data-action="refresh"]').addEventListener('click', async (e) => {
@@ -272,6 +306,13 @@ els.addFeedForm.addEventListener('submit', async (e) => {
 els.btnRefresh.addEventListener('click', refreshBatch);
 els.btnMore.addEventListener('click', () => loadItems(false));
 els.btnMarkAllRead.addEventListener('click', markAllRead);
+els.btnToggleFeeds.addEventListener('click', openFeeds);
+els.btnCloseFeeds.addEventListener('click', closeFeeds);
+els.feedsBackdrop.addEventListener('click', closeFeeds);
+
+window.matchMedia('(max-width: 980px)').addEventListener('change', (event) => {
+  if (!event.matches) closeFeeds();
+});
 
 els.unreadOnly.addEventListener('change', () => {
   state.unreadOnly = !!els.unreadOnly.checked;

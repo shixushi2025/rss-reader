@@ -45,14 +45,14 @@ function maskSensitiveUrl(url) {
     const parsed = new URL(url);
     const params = parsed.searchParams;
     for (const [key] of params.entries()) {
-      if (/access_?key/i.test(key)) {
-        params.set(key, '••••');
+      if (/(access_?key|key)/i.test(key)) {
+        params.delete(key);
       }
     }
     parsed.search = params.toString() ? `?${params.toString()}` : '';
     return parsed.toString();
   } catch {
-    return url.replace(/(access_?key=)[^&]+/gi, '$1••••');
+    return url.replace(/([?&](access_?key|key)=[^&]+)/gi, '');
   }
 }
 
@@ -108,7 +108,7 @@ function renderFeeds() {
       <div class="feed-item">
         <div class="feed-meta">
           <div class="feed-title" title="${title}">${title}</div>
-          <div class="feed-url" title="${displayUrl}">${displayUrl}</div>
+          <div class="feed-url">${displayUrl}</div>
           <div class="feed-badge">${last}</div>
         </div>
         <div class="feed-actions">

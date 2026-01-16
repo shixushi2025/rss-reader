@@ -166,6 +166,7 @@ function renderItemsTitle() {
   const feed = state.selectedFeedId ? state.feeds.find(f => f.id === state.selectedFeedId) : null;
   const base = feed?.title ? feed.title : (state.selectedFeedId ? `Feed ${state.selectedFeedId}` : 'All Feeds');
   els.itemsTitle.textContent = `Items — ${base}`;
+  document.title = `${base} – RSS Reader`;
 }
 
 function renderItems(items, append) {

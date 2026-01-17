@@ -8,9 +8,12 @@ export interface Env {
   SESSION_DAYS?: string;
   AUTH_RATE_LIMIT?: string;
   AUTH_RATE_WINDOW_MIN?: string;
+  TRANSLATE_RATE_LIMIT?: string;
+  TRANSLATE_RATE_WINDOW_MIN?: string;
   TURNSTILE_SECRET_KEY?: string;
   TURNSTILE_SITE_KEY?: string;
   TRANSLATE_PROVIDER?: string;
+  TRANSLATE_FEED_TITLES?: string;
   LIBRETRANSLATE_URL?: string;
   GOOGLE_TRANSLATE_KEY?: string;
   GOOGLE_TRANSLATE_REGION?: string;
@@ -151,6 +154,14 @@ function authRateLimit(env: Env) {
 
 function authRateWindowMs(env: Env) {
   return Math.max(1, intEnv(env, "AUTH_RATE_WINDOW_MIN", 10)) * 60_000;
+}
+
+function translateRateLimit(env: Env) {
+  return Math.max(1, intEnv(env, "TRANSLATE_RATE_LIMIT", 60));
+}
+
+function translateRateWindowMs(env: Env) {
+  return Math.max(1, intEnv(env, "TRANSLATE_RATE_WINDOW_MIN", 10)) * 60_000;
 }
 
 function getClientIp(request: Request) {
@@ -815,9 +826,11 @@ async function fetchGoogleProfile(accessToken: string) {
 }
 
 async function consumeRateLimit(env: Env, key: string) {
+  return consumeRateLimitWith(env, key, authRateLimit(env), authRateWindowMs(env));
+}
+
+async function consumeRateLimitWith(env: Env, key: string, limit: number, windowMs: number) {
   const now = nowMs();
-  const windowMs = authRateWindowMs(env);
-  const limit = authRateLimit(env);
   const { results } = await env.DB.prepare(
     `SELECT key, count, window_start
        FROM auth_rate_limits
@@ -965,6 +978,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       auth_enabled: ctx.authEnabled,
       user: ctx.user ? { id: ctx.user.id, email: ctx.user.email } : null,
       turnstile_site_key: (env.TURNSTILE_SITE_KEY || "").trim() || null,
+      translate_feed_titles: boolEnv(env, "TRANSLATE_FEED_TITLES", false),
     });
   }
 
@@ -1065,7 +1079,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     if (!text || text.length > 500) return badRequest("Invalid text", 400);
     if (!/^[a-z]{2}$/.test(target)) return badRequest("Invalid target", 400);
     const ip = getClientIp(request);
-    const rate = await consumeRateLimit(env, `translate:${ip}`);
+    const rate = await consumeRateLimitWith(env, `translate:${ip}`, translateRateLimit(env), translateRateWindowMs(env));
     if (!rate.allowed) return badRequest("Too many attempts", 429);
     const key = await translationKey(text, target);
     const cached = await getCachedTranslation(env, key);

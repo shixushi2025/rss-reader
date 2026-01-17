@@ -138,6 +138,9 @@ Configure one or more of:
 - `AI_TRANSLATE_URL`
 - `AI_TRANSLATE_KEY`
 - `TRANSLATE_PROVIDER` (optional: `libre`, `google`, or `ai`)
+- `TRANSLATE_FEED_TITLES` (optional, default false)
+- `TRANSLATE_RATE_LIMIT` (default 60)
+- `TRANSLATE_RATE_WINDOW_MIN` (default 10)
 
 Translation requests require an authenticated user when auth is enabled.
 

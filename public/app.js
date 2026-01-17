@@ -47,6 +47,7 @@ let state = {
   turnstileWidgetId: null,
   lang: localStorage.getItem('lang') || '',
   translationsCache: new Map(),
+  translateFeedTitles: false,
 };
 
 const translations = {
@@ -545,6 +546,7 @@ async function refreshAuth() {
     state.authEnabled = !!data?.auth_enabled;
     state.user = data?.user || null;
     state.turnstileSiteKey = data?.turnstile_site_key || '';
+    state.translateFeedTitles = !!data?.translate_feed_titles;
     applyAdminUI();
     renderFeeds();
   } catch (err) {
@@ -552,6 +554,7 @@ async function refreshAuth() {
     state.authEnabled = true;
     state.user = null;
     state.turnstileSiteKey = '';
+    state.translateFeedTitles = false;
     applyAdminUI();
     setStatus(formatString(t('status_auth_failed'), { error: err.message }));
   }
@@ -604,7 +607,7 @@ function renderFeeds() {
         </div>
       </div>
     `;
-    if (state.lang !== 'en' && title) {
+    if (state.translateFeedTitles && state.lang !== 'en' && title) {
       translateText(title).then((translated) => {
         const titleEl = li.querySelector('.feed-title');
         if (titleEl) titleEl.textContent = translated;
@@ -697,12 +700,6 @@ function renderItems(items, append) {
       translateText(title).then((translated) => {
         const titleEl = li.querySelector('.item-title a');
         if (titleEl) titleEl.textContent = translated;
-      });
-    }
-    if (state.lang !== 'en' && feedTitle) {
-      translateText(feedTitle).then((translated) => {
-        const metaSpans = li.querySelectorAll('.item-meta span');
-        if (metaSpans[0]) metaSpans[0].textContent = translated;
       });
     }
 

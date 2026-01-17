@@ -31,31 +31,39 @@
 <body>
   <div class="app">
     <header class="topbar">
-      <h1 class="brand">RSS Reader</h1>
+      <h1 class="brand" data-i18n="brand">RSS Reader</h1>
       <div class="actions">
-        <button id="btn-toggle-feeds" class="btn">Feeds</button>
-        <button id="btn-refresh" class="btn">Refresh batch</button>
+        <button id="btn-toggle-feeds" class="btn" data-i18n="feeds">Feeds</button>
+        <button id="btn-refresh" class="btn" data-i18n="refresh_batch">Refresh batch</button>
+        <button id="btn-login" class="btn" data-i18n="login">登录</button>
+        <button id="btn-admin" class="btn is-hidden" data-i18n="admin">管理</button>
+        <select id="lang-select" class="btn select">
+          <option value="zh">中文</option>
+          <option value="en">English</option>
+          <option value="ja">日本語</option>
+          <option value="ko">한국어</option>
+        </select>
       </div>
     </header>
 
     <main class="main">
       <section class="panel feeds">
         <div class="panel-header">
-          <div class="panel-title">Feeds</div>
+          <div class="panel-title" data-i18n="feeds">Feeds</div>
           <div class="panel-actions">
-            <button id="btn-close-feeds" class="btn">Close</button>
+            <button id="btn-close-feeds" class="btn" data-i18n="close">Close</button>
           </div>
         </div>
 
         <form id="add-feed-form" class="add-feed">
-          <input id="feed-url" type="url" placeholder="https://example.com/rss.xml" required />
-          <button class="btn primary" type="submit">Add</button>
+          <input id="feed-url" type="url" placeholder="https://example.com/rss.xml" data-i18n-placeholder="feed_placeholder" required />
+          <button class="btn primary" type="submit" data-i18n="add">Add</button>
         </form>
 
         <div class="feed-tools">
           <label class="checkbox">
             <input id="unread-only" type="checkbox" />
-            <span>Unread only</span>
+            <span data-i18n="unread_only">Unread only</span>
           </label>
         </div>
 
@@ -64,9 +72,9 @@
 
       <section class="panel items">
         <div class="panel-header">
-          <div class="panel-title" id="items-title">Items</div>
+          <div class="panel-title" id="items-title" data-i18n="items">Items</div>
           <div class="panel-actions">
-            <button id="btn-mark-all-read" class="btn">Mark all read</button>
+            <button id="btn-mark-all-read" class="btn" data-i18n="mark_all_read">Mark all read</button>
           </div>
         </div>
 
@@ -74,18 +82,61 @@
         <ul id="item-list" class="list items-list"></ul>
 
         <div class="pager">
-          <button id="btn-more" class="btn">Load more</button>
+          <button id="btn-more" class="btn" data-i18n="load_more">Load more</button>
         </div>
       </section>
     </main>
 
     <div id="feeds-backdrop" class="feeds-backdrop" aria-hidden="true"></div>
 
+    <div id="auth-modal" class="modal" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title" data-i18n="account">账户</div>
+          <button id="btn-auth-close" class="btn" data-i18n="close">Close</button>
+        </div>
+        <div class="auth-body">
+          <div id="auth-guest" class="auth-section">
+            <div class="auth-tabs">
+              <button class="btn tab is-active" type="button" data-mode="login" data-i18n="login">登录</button>
+              <button class="btn tab" type="button" data-mode="register" data-i18n="register">注册</button>
+            </div>
+            <form id="auth-form" class="auth-form">
+              <label class="field">
+                <span data-i18n="email">Email</span>
+                <input id="auth-email" type="email" placeholder="you@example.com" data-i18n-placeholder="email_placeholder" autocomplete="email" required />
+              </label>
+              <label class="field">
+                <span data-i18n="password">密码</span>
+                <input id="auth-password" type="password" placeholder="至少 8 位" data-i18n-placeholder="password_placeholder" autocomplete="current-password" required />
+              </label>
+              <label class="field is-hidden" id="auth-confirm-field">
+                <span data-i18n="confirm_password">确认密码</span>
+                <input id="auth-confirm" type="password" placeholder="重复输入密码" data-i18n-placeholder="confirm_password_placeholder" autocomplete="new-password" />
+              </label>
+              <div id="turnstile-container" class="turnstile"></div>
+              <button class="btn primary" type="submit" data-i18n="continue">继续</button>
+            </form>
+            <div class="auth-divider" data-i18n="or">或</div>
+            <button id="btn-google-login" class="btn" data-i18n="google_login">使用 Google 登录</button>
+          </div>
+
+          <div id="auth-user" class="auth-section is-hidden">
+            <div class="auth-user-info" id="auth-user-info"></div>
+            <button id="btn-logout" class="btn" type="button" data-i18n="logout">退出登录</button>
+          </div>
+
+          <div class="auth-status" id="auth-status"></div>
+        </div>
+      </div>
+    </div>
+
     <footer class="footer">
-      <span>RSS-only MVP. Deployed as a Worker with static assets + D1.</span>
+      <span data-i18n="footer">RSS-only MVP. Deployed as a Worker with static assets + D1.</span>
     </footer>
   </div>
 
   <script type="module" src="/app.js"></script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
 </body>
 </html>

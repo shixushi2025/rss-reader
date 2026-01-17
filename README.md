@@ -63,6 +63,11 @@ Notes:
 - If you do **not** want any defaults, delete that migration file (or clear its SQL) before applying migrations.
 - If you have already deployed, apply migrations again (`--remote`) to seed the additional feeds.
 
+## Feeds per user
+User subscriptions are stored in `user_feeds` so public/default feeds can be shared while
+each user can add/remove their own feeds without duplicating the feed record.
+The table includes an index on `user_id` for faster lookups.
+
 ## 4) Run locally
 ```bash
 npm run dev
@@ -92,6 +97,53 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
 
 If you do **not** set `ADMIN_TOKEN`, the app runs in “open mode”.
 
+## Auth (email + Google)
+Enable login by setting `AUTH_ENABLED=true` (or by setting `ADMIN_TOKEN`).
+
+### Email/password
+- `POST /api/auth/register` `{ "email": "...", "password": "..." }`
+- `POST /api/auth/login` `{ "email": "...", "password": "..." }`
+- `POST /api/auth/logout`
+
+The first registered user becomes an admin automatically.
+
+### Google OAuth
+Set the following Worker variables:
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `PUBLIC_BASE_URL` (e.g. `https://your-domain.com`)
+
+The app uses `GET /api/auth/google/start` and `GET /api/auth/google/callback`.
+
+### Session cookies
+Sessions are stored in D1 and sent via HttpOnly cookies. Use `SESSION_DAYS`
+to control duration (default 7 days).
+
+### Rate limiting
+Registration is protected with a simple IP-based limiter. Configure:
+- `AUTH_RATE_LIMIT` (default 5)
+- `AUTH_RATE_WINDOW_MIN` (default 10)
+
+### Turnstile (human verification)
+If you set Turnstile keys, both registration and login will require a completed challenge.
+- `TURNSTILE_SITE_KEY`
+- `TURNSTILE_SECRET_KEY`
+
+### Translations (UI + titles)
+The API caches translations in D1 and supports multiple providers, preferring free options.
+Configure one or more of:
+- `LIBRETRANSLATE_URL` (preferred if set)
+- `GOOGLE_TRANSLATE_KEY`
+- `GOOGLE_TRANSLATE_REGION` (optional)
+- `AI_TRANSLATE_URL`
+- `AI_TRANSLATE_KEY`
+- `TRANSLATE_PROVIDER` (optional: `libre`, `google`, or `ai`)
+- `TRANSLATE_FEED_TITLES` (optional, default false)
+- `TRANSLATE_RATE_LIMIT` (default 60)
+- `TRANSLATE_RATE_WINDOW_MIN` (default 10)
+
+Translation requests require an authenticated user when auth is enabled.
+
 ## Refresh strategy
 - Cron runs every 10 minutes (see `triggers.crons` in `wrangler.jsonc`)
 - Each run refreshes `REFRESH_BATCH` feeds (default 10)
@@ -109,10 +161,10 @@ Adjust these in `wrangler.jsonc` as you scale.
 - `GET /api/items?feed_id=&unread=1&cursor=&limit=`
 - `POST /api/items/:id/read` `{ "read": true|false }`
 - `POST /api/mark_all_read?feed_id=`
+- `POST /api/translate` `{ "text": "...", "target": "en" }`
 
 ## Next upgrades (if you want)
 - OPML import/export
 - Full-text search (D1 FTS or Vectorize)
-- Multi-user auth (Cloudflare Access / Turnstile + user table)
 - Better dedup (hash content)
 - Feed discovery (auto-detect RSS from site URL)
